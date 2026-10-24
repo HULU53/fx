@@ -1,0 +1,254 @@
+<template>
+  <div class="page settings-page">
+    <div class="page-head">
+      <text class="back-text" onclick="back">返回</text>
+      <text class="title settings-title">设置</text>
+      <text class="head-spacer"></text>
+    </div>
+
+    <scroll class="settings-scroll" scroll-y="{{true}}">
+      <div class="settings-list">
+        <div class="setting-card">
+          <div class="setting-copy">
+            <text class="setting-name">学生自学模式</text>
+            <text class="setting-detail">在最终结果下增加关键变形步骤</text>
+          </div>
+          <text class="switch {{studentClass}}" onclick="toggleStudentMode">{{studentText}}</text>
+        </div>
+
+        <div class="setting-card">
+          <div class="setting-copy">
+            <text class="setting-name">日志记录</text>
+            <text class="setting-detail">写入应用沙箱，默认开启</text>
+          </div>
+          <text class="switch {{logClass}}" onclick="toggleLogging">{{logText}}</text>
+        </div>
+
+        <div class="path-card">
+          <text class="path-label">当前日志</text>
+          <text class="path-value">/data/quickapp/files/com.codex.vela.fx/logs/fX.log.txt</text>
+          <text class="path-note">达到约 256 KB 后，下次启动会滚动为 fX.log.1.txt</text>
+        </div>
+
+        <text class="help-link" onclick="openHelp">查看输入语法与示例</text>
+        <text class="save-status">{{statusText}}</text>
+      </div>
+    </scroll>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+import settings from '../../common/settings.js'
+import logger from '../../common/logger.js'
+
+export default {
+  private: {
+    studentText: '关闭',
+    logText: '开启',
+    studentClass: 'switch-off',
+    logClass: 'switch-on',
+    statusText: ''
+  },
+
+  onInit() {
+    settings.load(value => {
+      this.applyView(value)
+      logger.initialize(value.logEnabled, { showHeader: false }).then(() => {
+        logger.info('PAGE_SETTINGS', 'onInit')
+      })
+    })
+  },
+
+  applyView(value) {
+    this.studentText = value.studentMode ? '开启' : '关闭'
+    this.logText = value.logEnabled ? '开启' : '关闭'
+    this.studentClass = value.studentMode ? 'switch-on' : 'switch-off'
+    this.logClass = value.logEnabled ? 'switch-on' : 'switch-off'
+  },
+
+  toggleStudentMode() {
+    const next = !settings.current().studentMode
+    settings.update({ studentMode: next }, (ok, value) => {
+      this.applyView(value)
+      this.statusText = ok ? '设置已保存' : '保存失败，请重试'
+      logger.info('SETTINGS', 'student mode changed', next)
+    })
+  },
+
+  toggleLogging() {
+    const next = !settings.current().logEnabled
+    if (!next) {
+      logger.info('SETTINGS', 'file logging disabled')
+    }
+    settings.update({ logEnabled: next }, (ok, value) => {
+      this.applyView(value)
+      this.statusText = ok ? '设置已保存' : '保存失败，请重试'
+      logger.configure(next)
+      if (next && ok) {
+        logger.info('SETTINGS', 'file logging enabled')
+      }
+    })
+  },
+
+  openHelp() {
+    router.push({ uri: '/pages/help' })
+  },
+
+  back() {
+    router.back()
+  }
+}
+</script>
+
+<style>
+@import '../../common/base.css';
+
+.settings-page {
+  padding-top: 14px;
+  padding-bottom: 12px;
+}
+
+.page-head {
+  width: 100%;
+  height: 48px;
+  flex-direction: row;
+  align-items: center;
+}
+
+.back-text {
+  width: 64px;
+  height: 38px;
+  border-width: 1px;
+  border-color: #42574f;
+  border-radius: 4px;
+  color: #dce8e3;
+  font-size: 14px;
+  line-height: 36px;
+  text-align: center;
+}
+
+.settings-title {
+  flex: 1;
+  text-align: center;
+}
+
+.head-spacer {
+  width: 64px;
+}
+
+.settings-scroll {
+  width: 100%;
+  flex: 1;
+  margin-top: 8px;
+}
+
+.settings-list {
+  width: 100%;
+  flex-direction: column;
+}
+
+.setting-card {
+  width: 100%;
+  min-height: 84px;
+  margin-bottom: 12px;
+  padding: 12px;
+  border-width: 2px;
+  border-color: #334840;
+  border-radius: 6px;
+  background-color: #19231f;
+  flex-direction: row;
+  align-items: center;
+}
+
+.setting-copy {
+  flex: 1;
+  flex-direction: column;
+}
+
+.setting-name {
+  color: #f0f6f3;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.setting-detail {
+  margin-top: 4px;
+  color: #8fa49d;
+  font-size: 11px;
+}
+
+.switch {
+  width: 64px;
+  height: 42px;
+  border-width: 2px;
+  border-radius: 4px;
+  font-size: 15px;
+  line-height: 38px;
+  text-align: center;
+}
+
+.switch-on {
+  border-color: #53d2a5;
+  background-color: #24654f;
+  color: #ffffff;
+}
+
+.switch-off {
+  border-color: #52645e;
+  background-color: #26322e;
+  color: #c4d0cc;
+}
+
+.path-card {
+  width: 100%;
+  margin-top: 2px;
+  padding: 12px;
+  border-left-width: 4px;
+  border-left-color: #d7a643;
+  border-radius: 5px;
+  background-color: #211f18;
+  flex-direction: column;
+}
+
+.path-label {
+  color: #e9c67e;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.path-value {
+  margin-top: 7px;
+  color: #e8eeeb;
+  font-size: 11px;
+}
+
+.path-note {
+  margin-top: 6px;
+  color: #9b9179;
+  font-size: 10px;
+}
+
+.help-link {
+  width: 100%;
+  height: 46px;
+  margin-top: 16px;
+  border-width: 2px;
+  border-color: #3f5b50;
+  border-radius: 5px;
+  background-color: #1a2823;
+  color: #8fe4c5;
+  font-size: 15px;
+  line-height: 42px;
+  text-align: center;
+}
+
+.save-status {
+  width: 100%;
+  height: 28px;
+  color: #75d6b2;
+  font-size: 11px;
+  line-height: 28px;
+  text-align: center;
+}
+</style>

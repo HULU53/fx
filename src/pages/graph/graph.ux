@@ -1,0 +1,293 @@
+<template>
+  <div class="page graph-page">
+    <div class="graph-head">
+      <text class="head-btn" onclick="back">返回</text>
+      <text class="graph-title">{{graphTitle}}</text>
+      <text class="head-spacer"></text>
+    </div>
+
+    <div class="graph-body">
+      <div class="loading-panel" if="{{loading}}">
+        <text class="loading-text">正在生成函数图像…</text>
+      </div>
+
+      <image class="graph-image" src="{{graphImageUri}}" if="{{imageReady}}"></image>
+
+      <div class="error-panel" if="{{hasError}}">
+        <text class="error-title">图像显示失败</text>
+        <text class="error-text">{{errorText}}</text>
+        <text class="retry-btn" onclick="renderGraph">重试</text>
+      </div>
+
+      <div class="points-panel" if="{{hasPoints}}">
+        <text class="points-title">关键点</text>
+        <text class="point-line" for="line in keyPointLines">{{line}}</text>
+      </div>
+    </div>
+
+    <text class="back-button" onclick="back">返回算式</text>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+import file from '@system.file'
+import session from '../../common/session.js'
+import modules from '../../common/modules.js'
+import settings from '../../common/settings.js'
+import logger from '../../common/logger.js'
+import graphImage from '../../common/math/graph-image.js'
+
+export default {
+  private: {
+    graphTitle: '函数图像',
+    loading: true,
+    imageReady: false,
+    graphImageUri: '',
+    hasError: false,
+    errorText: '',
+    hasPoints: false,
+    keyPointLines: [],
+    graphData: null
+  },
+
+  onInit() {
+    settings.load(value => {
+      logger.initialize(value.logEnabled, { showHeader: false }).then(() => {
+        logger.info('PAGE_GRAPH', 'onInit')
+      })
+    })
+    session.loadResult(record => {
+      if (!record || !record.result || !record.result.graph) {
+        this.showFailure('当前结果不包含可绘制的函数图像')
+        return
+      }
+      const module = modules.findModule(record.moduleId)
+      this.graphTitle = module ? module.title : '函数图像'
+      this.graphData = record.result.graph
+      this.keyPointLines = (this.graphData.keyPoints || []).map(function (point) {
+        const label = point.label || '关键点'
+        return label + '：(' + Number(point.x.toFixed(2)) + ', ' + Number(point.y.toFixed(2)) + ')'
+      })
+      this.hasPoints = this.keyPointLines.length > 0
+      this.renderGraph()
+    })
+  },
+
+  renderGraph() {
+    if (!this.graphData) {
+      return
+    }
+    this.loading = true
+    this.hasError = false
+    this.imageReady = false
+    try {
+      const bytes = graphImage.createGraphPng(this.graphData)
+      const directory = 'internal://files/tmp/'
+      const uri = directory + 'fx-graph-' + Date.now() + '.png'
+      this.ensureDirectory(directory).then(() => {
+        return this.writeImage(uri, bytes)
+      }).then(() => {
+        this.graphImageUri = uri
+        this.imageReady = true
+        this.loading = false
+        logger.info('GRAPH', 'png rendered', this.graphData.type)
+      }).catch(error => {
+        this.showFailure(error.message || String(error))
+      })
+    } catch (error) {
+      this.showFailure(error.message || String(error))
+    }
+  },
+
+  ensureDirectory(uri) {
+    return new Promise(resolve => {
+      file.access({
+        uri: uri,
+        success: resolve,
+        fail: function () {
+          file.mkdir({
+            uri: uri,
+            recursive: true,
+            success: resolve,
+            fail: resolve
+          })
+        }
+      })
+    })
+  },
+
+  writeImage(uri, bytes) {
+    return new Promise((resolve, reject) => {
+      file.writeArrayBuffer({
+        uri: uri,
+        buffer: bytes,
+        position: 0,
+        append: false,
+        success: resolve,
+        fail: function (data, code) {
+          reject(new Error('图片文件写入失败（' + code + '）'))
+        }
+      })
+    })
+  },
+
+  showFailure(message) {
+    this.loading = false
+    this.imageReady = false
+    this.hasError = true
+    this.errorText = message || '未知错误'
+    logger.warn('GRAPH', 'image failed', this.errorText)
+  },
+
+  back() {
+    router.back()
+  }
+}
+</script>
+
+<style>
+@import '../../common/base.css';
+
+.graph-page {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.graph-head {
+  width: 100%;
+  height: 44px;
+  flex-direction: row;
+  align-items: center;
+}
+
+.head-btn {
+  width: 64px;
+  height: 34px;
+  border-width: 1px;
+  border-color: #40574f;
+  border-radius: 4px;
+  color: #dce8e3;
+  font-size: 13px;
+  line-height: 32px;
+  text-align: center;
+}
+
+.head-spacer {
+  width: 64px;
+}
+
+.graph-title {
+  flex: 1;
+  color: #f2f7f5;
+  font-size: 21px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.graph-body {
+  width: 100%;
+  flex: 1;
+  padding-top: 8px;
+  flex-direction: column;
+  align-items: center;
+}
+
+.loading-panel,
+.error-panel,
+.points-panel {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  flex-direction: column;
+}
+
+.loading-panel {
+  background-color: #19231f;
+}
+
+.loading-text {
+  width: 100%;
+  color: #8fd8bd;
+  font-size: 14px;
+  text-align: center;
+}
+
+.graph-image {
+  width: 384px;
+  height: 260px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  background-color: #111916;
+  object-fit: contain;
+}
+
+.error-panel {
+  border-width: 2px;
+  border-color: #814e4e;
+  background-color: #2a1d1d;
+}
+
+.error-title {
+  width: 100%;
+  color: #ffb9b9;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.error-text {
+  width: 100%;
+  margin-top: 6px;
+  color: #e7d0d0;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.retry-btn {
+  width: 100%;
+  height: 36px;
+  margin-top: 9px;
+  border-radius: 6px;
+  background-color: #603434;
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 36px;
+  text-align: center;
+}
+
+.points-panel {
+  border-width: 1px;
+  border-color: #51462f;
+  background-color: #211f19;
+}
+
+.points-title {
+  width: 100%;
+  color: #e5bd6b;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.point-line {
+  width: 100%;
+  margin-top: 4px;
+  color: #c9c0ad;
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.back-button {
+  width: 84%;
+  height: 42px;
+  align-self: center;
+  border-width: 2px;
+  border-color: #4acb9c;
+  border-radius: 8px;
+  background-color: #24664f;
+  color: #ffffff;
+  font-size: 15px;
+  line-height: 38px;
+  text-align: center;
+}
+</style>

@@ -1,0 +1,26 @@
+<script>
+const settings = require('./common/settings')
+const logger = require('./common/logger')
+const session = require('./common/session')
+
+export default {
+  onCreate() {
+    session.clearPersistedResult()
+    session.clearPersistedModule()
+    settings.load(function (value) {
+      logger.initialize(value.logEnabled).then(function () {
+        logger.info('APP', 'started', {
+          versionName: '1.0.12',
+          versionCode: 13,
+          studentMode: value.studentMode,
+          logEnabled: value.logEnabled
+        })
+      })
+    })
+  },
+
+  onDestroy() {
+    logger.info('APP', 'destroyed')
+  }
+}
+</script>

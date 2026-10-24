@@ -1,0 +1,286 @@
+<template>
+  <div class="page result-page">
+    <div class="result-head">
+      <text class="head-btn" onclick="backToInput">返回</text>
+      <text class="result-title">{{resultTitle}}</text>
+      <text class="head-spacer"></text>
+    </div>
+
+    <scroll class="result-scroll" scroll-y="{{true}}">
+      <div class="error-panel" if="{{hasError}}">
+        <text class="error-title">暂时无法计算</text>
+        <text class="error-text">{{errorText}}</text>
+        <text class="error-tip">返回检查输入，或打开“说明”查看支持的写法。</text>
+      </div>
+
+      <div class="result-card" if="{{!hasError}}">
+        <text class="section-kicker">精确结果</text>
+        <text class="exact-text" for="line in exactLines">{{line}}</text>
+        <text class="approx-text" if="{{hasApproximate}}">近似值：{{approximateText}}</text>
+        <text class="domain-text" if="{{hasDomain}}">{{domainText}}</text>
+      </div>
+
+      <div class="step-card" if="{{showSteps}}">
+        <text class="section-kicker">关键步骤</text>
+        <text class="steps-text" for="line in stepLines">{{line}}</text>
+      </div>
+
+      <text class="graph-tip" if="{{hasGraph}}">函数算式已整理完成，可进入独立页面查看图像。</text>
+    </scroll>
+
+    <div class="result-actions">
+      <text class="action-btn graph-btn" if="{{hasGraph}}" onclick="openGraph">显示图像</text>
+      <text class="action-btn" onclick="backToInput">继续修改</text>
+    </div>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+import settings from '../../common/settings.js'
+import session from '../../common/session.js'
+import modules from '../../common/modules.js'
+import logger from '../../common/logger.js'
+
+export default {
+  private: {
+    resultTitle: '计算结果',
+    hasError: false,
+    errorText: '',
+    exactLines: [],
+    hasApproximate: false,
+    approximateText: '',
+    hasDomain: false,
+    domainText: '',
+    showSteps: false,
+    stepLines: [],
+    hasGraph: false
+  },
+
+  onInit() {
+    settings.load(value => {
+      logger.initialize(value.logEnabled, { showHeader: false }).then(() => {
+        logger.info('PAGE_RESULT', 'onInit')
+      })
+    })
+    session.loadResult(record => {
+      this.applyRecord(record)
+    })
+  },
+
+  applyRecord(record) {
+    if (!record) {
+      this.hasError = true
+      this.errorText = '没有可显示的计算结果'
+      return
+    }
+    const module = modules.findModule(record.moduleId)
+    const result = record.result
+    this.resultTitle = result.title || (module ? module.title : '计算结果')
+    this.hasError = !result.ok
+    this.errorText = result.error || '未知错误'
+    this.exactLines = result.exact || []
+    const approximate = result.approximate || []
+    this.hasApproximate = approximate.length > 0
+    this.approximateText = approximate.join('  ')
+    this.hasDomain = Boolean(result.domain)
+    this.domainText = result.domain ? '定义域/限制：' + result.domain : ''
+    this.stepLines = (result.steps || []).map(function (step, index) {
+      return (index + 1) + '. ' + step
+    })
+    this.hasGraph = Boolean(result.graph)
+    settings.load(value => {
+      this.showSteps = value.studentMode && result.ok && this.stepLines.length > 0
+    })
+    logger.info('PAGE_RESULT', 'result loaded', {
+      moduleId: record.moduleId,
+      modeId: record.modeId,
+      ok: result.ok,
+      kind: result.kind
+    })
+  },
+
+  openGraph() {
+    logger.info('UI', 'open function graph')
+    router.push({ uri: '/pages/graph' })
+  },
+
+  backToInput() {
+    session.clearResult()
+    router.back()
+  }
+}
+</script>
+
+<style>
+@import '../../common/base.css';
+
+.result-page {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.result-head {
+  width: 100%;
+  height: 44px;
+  flex-direction: row;
+  align-items: center;
+}
+
+.head-btn {
+  width: 64px;
+  height: 34px;
+  border-width: 1px;
+  border-color: #40574f;
+  border-radius: 4px;
+  color: #dce8e3;
+  font-size: 13px;
+  line-height: 32px;
+  text-align: center;
+}
+
+.head-spacer {
+  width: 64px;
+}
+
+.result-title {
+  flex: 1;
+  color: #f2f7f5;
+  font-size: 21px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.result-scroll {
+  width: 100%;
+  flex: 1;
+  margin-top: 7px;
+}
+
+.result-card,
+.step-card,
+.error-panel {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 12px;
+  border-width: 2px;
+  border-radius: 8px;
+  flex-direction: column;
+}
+
+.result-card {
+  border-color: #3f6d5a;
+  background-color: #192820;
+  flex-shrink: 0;
+}
+
+.step-card {
+  border-color: #3b4e47;
+  background-color: #1a211e;
+}
+
+.error-panel {
+  border-color: #7f4b4b;
+  background-color: #2a1d1d;
+}
+
+.section-kicker {
+  width: 100%;
+  height: 26px;
+  color: #67dfb5;
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 26px;
+}
+
+.exact-text {
+  width: 100%;
+  color: #f4e3b9;
+  font-size: 19px;
+  line-height: 30px;
+}
+
+.approx-text,
+.domain-text {
+  width: 100%;
+  margin-top: 6px;
+  color: #a7bbb4;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.domain-text {
+  color: #e6ba63;
+}
+
+.error-title {
+  color: #ffb5b5;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 34px;
+}
+
+.error-text {
+  width: 100%;
+  color: #f2dede;
+  font-size: 15px;
+  line-height: 25px;
+}
+
+.error-tip {
+  width: 100%;
+  margin-top: 9px;
+  color: #bd9e9e;
+  font-size: 11px;
+  line-height: 19px;
+}
+
+.steps-text {
+  width: 100%;
+  color: #c9d6d1;
+  font-size: 13px;
+  line-height: 23px;
+}
+
+.graph-tip {
+  width: 100%;
+  padding: 10px;
+  border-left-width: 4px;
+  border-left-color: #d5a748;
+  border-radius: 5px;
+  background-color: #211f19;
+  color: #d8c292;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.result-actions {
+  width: 100%;
+  height: 62px;
+  padding-top: 9px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn {
+  width: 44%;
+  height: 44px;
+  margin-right: 6px;
+  margin-left: 6px;
+  border-width: 2px;
+  border-color: #4acb9c;
+  border-radius: 8px;
+  background-color: #24664f;
+  color: #ffffff;
+  font-size: 16px;
+  line-height: 40px;
+  text-align: center;
+}
+
+.graph-btn {
+  border-color: #d5a748;
+  background-color: #5a431f;
+  color: #ffe1a3;
+}
+</style>

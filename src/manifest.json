@@ -1,0 +1,56 @@
+{
+  "package": "com.codex.vela.fx",
+  "name": "fX",
+  "versionName": "1.0.12",
+  "versionCode": 13,
+  "icon": "/common/logo.png",
+  "deviceTypeList": [
+    "watch"
+  ],
+  "minPlatformVersion": 1000,
+  "minAPILevel": 1,
+  "features": [
+    {
+      "name": "system.router"
+    },
+    {
+      "name": "system.storage"
+    },
+    {
+      "name": "system.file"
+    }
+  ],
+  "config": {
+    "logLevel": "info",
+    "designWidth": 432
+  },
+  "display": {
+    "backgroundColor": "#11161a",
+    "orientation": "portrait",
+    "statusBarImmersive": true,
+    "statusBarTextStyle": "light"
+  },
+  "router": {
+    "entry": "pages/index",
+    "pages": {
+      "pages/index": {
+        "component": "index"
+      },
+      "pages/workspace": {
+        "component": "workspace"
+      },
+      "pages/result": {
+        "component": "result"
+      },
+      "pages/graph": {
+        "component": "graph"
+      },
+      "pages/settings": {
+        "component": "settings"
+      },
+      "pages/help": {
+        "component": "help"
+      }
+    }
+  }
+}

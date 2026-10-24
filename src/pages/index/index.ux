@@ -1,0 +1,317 @@
+<template>
+  <div class="page home-page">
+    <div class="home-header">
+      <div class="brand-block">
+        <text class="brand-mark">fX</text>
+        <text class="brand-sub">数学计算工具</text>
+      </div>
+      <div class="header-actions">
+        <text class="header-btn" onclick="openHelp">帮助</text>
+        <text class="header-btn" onclick="openSettings">设置</text>
+      </div>
+    </div>
+
+    <swiper
+      id="moduleSwiper"
+      class="module-swiper"
+      index="{{activePage}}"
+      vertical="{{true}}"
+      loop="{{false}}"
+      indicator="{{false}}"
+      duration="{{250}}"
+      enableswipe="{{true}}"
+      onchange="onSwiperChange"
+    >
+      <div class="module-page">
+        <div class="module-card">
+          <text class="module-title" onclick="openPolynomial">整式运算</text>
+          <text class="module-summary" onclick="openPolynomial">展开 · 化简 · 因式分解</text>
+        </div>
+        <div class="module-card">
+          <text class="module-title" onclick="openRational">分式运算</text>
+          <text class="module-summary" onclick="openRational">约分 · 通分 · 分式方程</text>
+        </div>
+        <div class="module-card">
+          <text class="module-title" onclick="openEquations">方程与不等式</text>
+          <text class="module-summary" onclick="openEquations">一元方程 · 方程组 · 不等式</text>
+        </div>
+      </div>
+      <div class="module-page">
+        <div class="module-card">
+          <text class="module-title" onclick="openRadical">二次根式</text>
+          <text class="module-summary" onclick="openRadical">化简 · 加减乘除 · 有理化</text>
+        </div>
+        <div class="module-card">
+          <text class="module-title" onclick="openLinear">一次函数</text>
+          <text class="module-summary" onclick="openLinear">斜率 · 截距 · 坐标图像</text>
+        </div>
+        <div class="module-card">
+          <text class="module-title" onclick="openInverse">反比例函数</text>
+          <text class="module-summary" onclick="openInverse">比例系数 · 渐近线 · 图像</text>
+        </div>
+      </div>
+      <div class="module-page">
+        <div class="module-card">
+          <text class="module-title" onclick="openQuadratic">二次函数</text>
+          <text class="module-summary" onclick="openQuadratic">三式互化 · 关键点 · 图像</text>
+        </div>
+      </div>
+    </swiper>
+
+    <div class="page-controls">
+      <text class="page-button" onclick="previousPage">上一页</text>
+      <text class="page-indicator">{{pageLabel}}</text>
+      <text class="page-button" onclick="nextPage">下一页</text>
+    </div>
+
+    <div class="home-footer">
+      <text class="mode-indicator">{{modeText}}</text>
+      <text class="swipe-tip">上下滑动查看全部模块</text>
+    </div>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+import settings from '../../common/settings.js'
+import session from '../../common/session.js'
+import logger from '../../common/logger.js'
+
+export default {
+  private: {
+    modeText: '个人计算器',
+    activePage: 0,
+    pageLabel: '1 / 3'
+  },
+
+  onInit() {
+    settings.load(value => {
+      this.modeText = value.studentMode ? '学生自学模式' : '个人计算器'
+      logger.initialize(value.logEnabled, { showHeader: false }).then(() => {
+        logger.info('PAGE_HOME', 'onInit')
+      })
+    })
+  },
+
+  openModule(moduleId) {
+    logger.info('UI', 'open module', moduleId)
+    session.openModule(moduleId, function () {
+      router.push({
+        uri: '/pages/workspace',
+        params: {
+          moduleId: moduleId
+        }
+      })
+    })
+  },
+
+  onSwiperChange(event) {
+    if (event && typeof event.index === 'number') {
+      this.activePage = event.index
+      this.pageLabel = (event.index + 1) + ' / 3'
+    }
+  },
+
+  previousPage() {
+    this.movePage(-1)
+  },
+
+  nextPage() {
+    this.movePage(1)
+  },
+
+  movePage(delta) {
+    const target = this.activePage + delta
+    if (target < 0 || target > 2) {
+      return
+    }
+    this.activePage = target
+    this.pageLabel = (target + 1) + ' / 3'
+    const swiper = this.$element('moduleSwiper')
+    if (swiper) {
+      swiper.swipeTo({ index: target })
+    }
+  },
+
+  openPolynomial() {
+    this.openModule('polynomial')
+  },
+
+  openRational() {
+    this.openModule('rational')
+  },
+
+  openEquations() {
+    this.openModule('equations')
+  },
+
+  openRadical() {
+    this.openModule('radical')
+  },
+
+  openLinear() {
+    this.openModule('linear')
+  },
+
+  openInverse() {
+    this.openModule('inverse')
+  },
+
+  openQuadratic() {
+    this.openModule('quadratic')
+  },
+
+  openSettings() {
+    logger.info('UI', 'open settings')
+    router.push({ uri: '/pages/settings' })
+  },
+
+  openHelp() {
+    logger.info('UI', 'open help')
+    router.push({ uri: '/pages/help' })
+  }
+}
+</script>
+
+<style>
+@import '../../common/base.css';
+
+.home-page {
+  padding-top: 20px;
+  padding-bottom: 12px;
+}
+
+.home-header {
+  width: 100%;
+  height: 64px;
+  flex-direction: row;
+  align-items: center;
+}
+
+.brand-block {
+  width: 188px;
+  flex-direction: column;
+}
+
+.brand-mark {
+  height: 38px;
+  color: #69dfb5;
+  font-size: 32px;
+  font-weight: bold;
+  line-height: 38px;
+}
+
+.brand-sub {
+  color: #93aaa3;
+  font-size: 12px;
+}
+
+.header-actions {
+  flex: 1;
+  height: 40px;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.header-btn {
+  width: 66px;
+  height: 34px;
+  margin-left: 8px;
+  border-width: 1px;
+  border-color: #40574f;
+  border-radius: 4px;
+  color: #dce9e4;
+  font-size: 13px;
+  line-height: 32px;
+  text-align: center;
+}
+
+.module-swiper {
+  width: 100%;
+  height: 334px;
+  margin-top: 6px;
+}
+
+.module-page {
+  width: 100%;
+  height: 100%;
+  padding-top: 4px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.module-card {
+  width: 100%;
+  height: 100px;
+  margin-bottom: 8px;
+  padding-left: 18px;
+  border-radius: 18px;
+  background-color: #2a2f36;
+  flex-direction: column;
+  flex-shrink: 0;
+  justify-content: center;
+}
+
+.module-title {
+  width: 100%;
+  height: 36px;
+  color: #f2f7f5;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 36px;
+  text-align: left;
+}
+
+.module-summary {
+  width: 100%;
+  height: 26px;
+  color: #b8c7d8;
+  font-size: 14px;
+  line-height: 26px;
+  text-align: left;
+}
+
+.home-footer {
+  width: 100%;
+  height: 36px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.page-controls {
+  width: 100%;
+  height: 32px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.page-button {
+  width: 74px;
+  height: 28px;
+  border-radius: 14px;
+  background-color: #29343a;
+  color: #a9c5c0;
+  font-size: 11px;
+  line-height: 28px;
+  text-align: center;
+}
+
+.page-indicator {
+  color: #e8b958;
+  font-size: 12px;
+  text-align: center;
+}
+
+.mode-indicator {
+  color: #e8b958;
+  font-size: 12px;
+}
+
+.swipe-tip {
+  color: #728780;
+  font-size: 11px;
+}
+</style>

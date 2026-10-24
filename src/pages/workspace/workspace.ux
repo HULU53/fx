@@ -1,0 +1,634 @@
+<template>
+  <div class="page workspace-page">
+    <div class="workspace-head">
+      <text class="back-text" onclick="back">返回</text>
+      <text class="workspace-title">{{moduleTitle}}</text>
+      <text class="help-text" onclick="openHelp">说明</text>
+    </div>
+
+    <div class="mode-bar">
+      <text class="mode-arrow" onclick="previousMode">‹</text>
+      <div class="mode-copy">
+        <text class="mode-name">{{modeLabel}}</text>
+        <text class="mode-count">{{modePosition}}</text>
+      </div>
+      <text class="mode-arrow" onclick="nextMode">›</text>
+    </div>
+
+    <div class="input-panel">
+      <div class="input-row {{firstRowClass}}" onclick="selectFirstLine">
+        <text class="line-label" onclick="selectFirstLine">{{firstLabel}}</text>
+        <scrollview class="line-scroll" scroll-direction="horizontal" show-scrollbar="false">
+          <text class="line-value" onclick="selectFirstLine">{{line1}}</text>
+        </scrollview>
+      </div>
+      <div class="input-row {{secondRowClass}}" if="{{multiLine}}" onclick="selectSecondLine">
+        <text class="line-label" onclick="selectSecondLine">{{secondLabel}}</text>
+        <scrollview class="line-scroll" scroll-direction="horizontal" show-scrollbar="false">
+          <text class="line-value" onclick="selectSecondLine">{{line2}}</text>
+        </scrollview>
+      </div>
+      <text class="input-hint">{{hintText}}</text>
+    </div>
+
+    <div class="keyboard">
+      <div class="layer-tabs">
+        <text class="layer-tab {{numericTabClass}}" onclick="showNumericLayer">123</text>
+        <text class="layer-tab {{symbolTabClass}}" onclick="showSymbolLayer">x  √</text>
+        <text class="layer-tab {{letterTabClass}}" onclick="showLetterLayer">ABC</text>
+        <text class="layer-caption">{{activeCaption}}</text>
+      </div>
+
+      <div class="keypad" if="{{numericLayer}}">
+        <div class="key-row">
+          <text class="key" onclick="key7">7</text>
+          <text class="key" onclick="key8">8</text>
+          <text class="key" onclick="key9">9</text>
+          <text class="key key-op" onclick="keyDivide">÷</text>
+        </div>
+        <div class="key-row">
+          <text class="key" onclick="key4">4</text>
+          <text class="key" onclick="key5">5</text>
+          <text class="key" onclick="key6">6</text>
+          <text class="key key-op" onclick="keyMultiply">×</text>
+        </div>
+        <div class="key-row">
+          <text class="key" onclick="key1">1</text>
+          <text class="key" onclick="key2">2</text>
+          <text class="key" onclick="key3">3</text>
+          <text class="key key-op" onclick="keyMinus">−</text>
+        </div>
+        <div class="key-row">
+          <text class="key" onclick="key0">0</text>
+          <text class="key" onclick="keyDecimal">.</text>
+          <text class="key key-op" onclick="keyPlus">+</text>
+          <text class="key" onclick="keyOpenParen">(</text>
+        </div>
+        <div class="key-row">
+          <text class="key" onclick="keyCloseParen">)</text>
+          <text class="key key-action" onclick="backspace">退格</text>
+          <text class="key key-action" onclick="clearLine">清空</text>
+          <text class="key key-equals" onclick="calculate">=</text>
+        </div>
+      </div>
+
+      <div class="keypad" if="{{symbolLayer}}">
+        <div class="key-row">
+          <text class="key key-symbol" onclick="keyX">x</text>
+          <text class="key key-symbol" onclick="keyY">y</text>
+          <text class="key key-symbol" onclick="keySqrt">√</text>
+          <text class="key key-symbol" onclick="keyPower">^</text>
+        </div>
+        <div class="key-row">
+          <text class="key" onclick="keyOpenParen">(</text>
+          <text class="key" onclick="keyCloseParen">)</text>
+          <text class="key key-symbol" onclick="keyLessEqual">≤</text>
+          <text class="key key-symbol" onclick="keyGreaterEqual">≥</text>
+        </div>
+        <div class="key-row">
+          <text class="key key-symbol" onclick="keyLess">&lt;</text>
+          <text class="key key-symbol" onclick="keyGreater">&gt;</text>
+          <text class="key key-symbol" onclick="keyEquals">=</text>
+          <text class="key key-symbol" onclick="keyComma">,</text>
+        </div>
+        <div class="key-row">
+          <text class="key key-op" onclick="keySlash">/</text>
+          <text class="key key-op" onclick="keyMultiply">·</text>
+          <text class="key key-action" onclick="backspace">退格</text>
+          <text class="key key-action" onclick="clearLine">清空</text>
+        </div>
+        <div class="key-row">
+          <text class="key key-wide" onclick="showNumericLayer">返回数字</text>
+          <text class="key key-equals key-wide" onclick="calculate">计算</text>
+        </div>
+      </div>
+
+      <div class="keypad" if="{{letterLayer}}">
+        <div class="key-row">
+          <text class="key letter-key" onclick="appendLetter('A')">A</text>
+          <text class="key letter-key" onclick="appendLetter('B')">B</text>
+          <text class="key letter-key" onclick="appendLetter('C')">C</text>
+          <text class="key letter-key" onclick="appendLetter('D')">D</text>
+          <text class="key letter-key" onclick="appendLetter('E')">E</text>
+          <text class="key letter-key" onclick="appendLetter('F')">F</text>
+        </div>
+        <div class="key-row">
+          <text class="key letter-key" onclick="appendLetter('G')">G</text>
+          <text class="key letter-key" onclick="appendLetter('H')">H</text>
+          <text class="key letter-key" onclick="appendLetter('I')">I</text>
+          <text class="key letter-key" onclick="appendLetter('J')">J</text>
+          <text class="key letter-key" onclick="appendLetter('K')">K</text>
+          <text class="key letter-key" onclick="appendLetter('L')">L</text>
+        </div>
+        <div class="key-row">
+          <text class="key letter-key" onclick="appendLetter('M')">M</text>
+          <text class="key letter-key" onclick="appendLetter('N')">N</text>
+          <text class="key letter-key" onclick="appendLetter('O')">O</text>
+          <text class="key letter-key" onclick="appendLetter('P')">P</text>
+          <text class="key letter-key" onclick="appendLetter('Q')">Q</text>
+          <text class="key letter-key" onclick="appendLetter('R')">R</text>
+        </div>
+        <div class="key-row">
+          <text class="key letter-key" onclick="appendLetter('S')">S</text>
+          <text class="key letter-key" onclick="appendLetter('T')">T</text>
+          <text class="key letter-key" onclick="appendLetter('U')">U</text>
+          <text class="key letter-key" onclick="appendLetter('V')">V</text>
+          <text class="key letter-key" onclick="appendLetter('W')">W</text>
+          <text class="key letter-key" onclick="appendLetter('X')">X</text>
+        </div>
+        <div class="key-row">
+          <text class="key letter-key" onclick="appendLetter('Y')">Y</text>
+          <text class="key letter-key" onclick="appendLetter('Z')">Z</text>
+          <text class="key key-action" onclick="backspace">退格</text>
+          <text class="key key-action" onclick="clearLine">清空</text>
+          <text class="key key-action" onclick="showNumericLayer">123</text>
+          <text class="key key-equals" onclick="calculate">=</text>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+import modules from '../../common/modules.js'
+import session from '../../common/session.js'
+import engine from '../../common/math/engine.js'
+import logger from '../../common/logger.js'
+import settings from '../../common/settings.js'
+
+export default {
+  private: {
+    moduleId: 'polynomial',
+    moduleTitle: '整式运算',
+    modeIndex: 0,
+    modeLabel: '化简/展开',
+    modePosition: '1/2',
+    hintText: '',
+    multiLine: false,
+    firstLabel: '算式',
+    secondLabel: '第 2 行',
+    activeLine: 0,
+    line1: '',
+    line2: '',
+    firstRowClass: 'input-row-active',
+    secondRowClass: '',
+    numericLayer: true,
+    symbolLayer: false,
+    letterLayer: false,
+    numericTabClass: 'layer-tab-active',
+    symbolTabClass: '',
+    letterTabClass: '',
+    activeCaption: '数字与四则运算'
+  },
+
+  onInit(params) {
+    const routeModuleId = params && params.moduleId ? params.moduleId : ''
+    session.loadActiveModule(storedModuleId => {
+      this.moduleId = storedModuleId || routeModuleId || 'polynomial'
+      const module = modules.findModule(this.moduleId) || modules.MODULES[0]
+      this.moduleTitle = module.title
+      this.modeIndex = 0
+      this.loadMode()
+      settings.load(value => {
+        logger.initialize(value.logEnabled, { showHeader: false }).then(() => {
+          logger.info('PAGE_WORKSPACE', 'onInit', this.moduleId)
+        })
+      })
+    })
+  },
+
+  currentModule() {
+    return modules.findModule(this.moduleId) || modules.MODULES[0]
+  },
+
+  currentMode() {
+    return this.currentModule().modes[this.modeIndex]
+  },
+
+  loadMode() {
+    const module = this.currentModule()
+    const mode = module.modes[this.modeIndex]
+    const draft = session.getDraft(this.moduleId, mode)
+    this.modeLabel = mode.label
+    this.modePosition = (this.modeIndex + 1) + '/' + module.modes.length
+    this.multiLine = Boolean(mode.multiLine)
+    this.hintText = mode.placeholder
+    this.firstLabel = mode.multiLine ? '第 1 行' : '算式'
+    this.secondLabel = '第 2 行'
+    this.activeLine = draft.activeLine || 0
+    this.line1 = draft.lines[0] || ''
+    this.line2 = draft.lines[1] || ''
+    this.refreshRowClasses()
+    logger.info('WORKSPACE', 'mode selected', {
+      moduleId: this.moduleId,
+      modeId: mode.id,
+      index: this.modeIndex
+    })
+  },
+
+  saveDraft() {
+    session.setDraft(this.moduleId, this.currentMode().id, {
+      lines: [this.line1, this.line2],
+      activeLine: this.activeLine,
+      multiLine: this.multiLine
+    })
+  },
+
+  refreshRowClasses() {
+    this.firstRowClass = this.activeLine === 0 ? 'input-row-active' : ''
+    this.secondRowClass = this.activeLine === 1 ? 'input-row-active' : ''
+  },
+
+  previousMode() {
+    const modes = this.currentModule().modes
+    this.modeIndex = (this.modeIndex + modes.length - 1) % modes.length
+    this.loadMode()
+  },
+
+  nextMode() {
+    const modes = this.currentModule().modes
+    this.modeIndex = (this.modeIndex + 1) % modes.length
+    this.loadMode()
+  },
+
+  selectFirstLine() {
+    this.activeLine = 0
+    this.refreshRowClasses()
+    this.saveDraft()
+  },
+
+  selectSecondLine() {
+    if (!this.multiLine) {
+      return
+    }
+    this.activeLine = 1
+    this.refreshRowClasses()
+    this.saveDraft()
+  },
+
+  currentText() {
+    return this.activeLine === 1 ? this.line2 : this.line1
+  },
+
+  setCurrentText(text) {
+    if (this.activeLine === 1 && this.multiLine) {
+      this.line2 = text
+    } else {
+      this.line1 = text
+    }
+    this.saveDraft()
+  },
+
+  appendValue(value) {
+    const current = this.currentText()
+    if (current.length + value.length > 120) {
+      this.hintText = '输入不能超过 120 个字符'
+      return
+    }
+    this.setCurrentText(current + value)
+  },
+
+  backspace() {
+    const current = this.currentText()
+    this.setCurrentText(current.slice(0, Math.max(0, current.length - 1)))
+  },
+
+  clearLine() {
+    this.setCurrentText('')
+  },
+
+  showNumericLayer() {
+    this.numericLayer = true
+    this.symbolLayer = false
+    this.letterLayer = false
+    this.numericTabClass = 'layer-tab-active'
+    this.symbolTabClass = ''
+    this.letterTabClass = ''
+    this.activeCaption = '数字与四则运算'
+  },
+
+  showSymbolLayer() {
+    this.numericLayer = false
+    this.symbolLayer = true
+    this.letterLayer = false
+    this.numericTabClass = ''
+    this.symbolTabClass = 'layer-tab-active'
+    this.letterTabClass = ''
+    this.activeCaption = '变量、根式与关系符号'
+  },
+
+  showLetterLayer() {
+    this.numericLayer = false
+    this.symbolLayer = false
+    this.letterLayer = true
+    this.numericTabClass = ''
+    this.symbolTabClass = ''
+    this.letterTabClass = 'layer-tab-active'
+    this.activeCaption = '字母未知数 A-Z'
+  },
+
+  appendLetter(letter) {
+    this.appendValue(letter)
+  },
+
+  key0() { this.appendValue('0') },
+  key1() { this.appendValue('1') },
+  key2() { this.appendValue('2') },
+  key3() { this.appendValue('3') },
+  key4() { this.appendValue('4') },
+  key5() { this.appendValue('5') },
+  key6() { this.appendValue('6') },
+  key7() { this.appendValue('7') },
+  key8() { this.appendValue('8') },
+  key9() { this.appendValue('9') },
+  keyDecimal() { this.appendValue('.') },
+  keyDivide() { this.appendValue('/') },
+  keyMultiply() { this.appendValue('*') },
+  keyMinus() { this.appendValue('-') },
+  keyPlus() { this.appendValue('+') },
+  keyOpenParen() { this.appendValue('(') },
+  keyCloseParen() { this.appendValue(')') },
+  keyX() { this.appendValue('x') },
+  keyY() { this.appendValue('y') },
+  keySqrt() { this.appendValue('√') },
+  keyPower() { this.appendValue('^') },
+  keyLessEqual() { this.appendValue('≤') },
+  keyGreaterEqual() { this.appendValue('≥') },
+  keyLess() { this.appendValue('<') },
+  keyGreater() { this.appendValue('>') },
+  keyEquals() { this.appendValue('=') },
+  keyComma() { this.appendValue(',') },
+  keySlash() { this.appendValue('/') },
+
+  calculate() {
+    const mode = this.currentMode()
+    const inputs = this.multiLine ? [this.line1, this.line2] : [this.line1]
+    const started = Date.now()
+    const result = engine.run(this.moduleId, mode.id, inputs)
+    logger.info('CALC', 'calculation finished', {
+      moduleId: this.moduleId,
+      modeId: mode.id,
+      ok: result.ok,
+      error: result.error,
+      durationMs: Date.now() - started,
+      input: logger.truncateInput(inputs.join(' ; '))
+    })
+    if (!result.ok) {
+      logger.warn('CALC', 'calculation rejected', result.error)
+    }
+    session.setResult(this.moduleId, mode.id, inputs, result, function (stored) {
+      if (!stored) {
+        logger.error('CALC', 'failed to store current result')
+      }
+      router.push({ uri: '/pages/result' })
+    })
+  },
+
+  openHelp() {
+    router.push({ uri: '/pages/help' })
+  },
+
+  back() {
+    this.saveDraft()
+    router.back()
+  }
+}
+</script>
+
+<style>
+@import '../../common/base.css';
+
+.workspace-page {
+  padding-top: 10px;
+  padding-bottom: 8px;
+}
+
+.workspace-head {
+  width: 100%;
+  height: 44px;
+  flex-direction: row;
+  align-items: center;
+}
+
+.back-text,
+.help-text {
+  width: 62px;
+  height: 34px;
+  border-width: 1px;
+  border-color: #40574f;
+  border-radius: 4px;
+  color: #dce8e3;
+  font-size: 13px;
+  line-height: 32px;
+  text-align: center;
+}
+
+.help-text {
+  color: #80d6b7;
+}
+
+.workspace-title {
+  flex: 1;
+  color: #f2f7f5;
+  font-size: 21px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.mode-bar {
+  width: 100%;
+  height: 40px;
+  margin-top: 4px;
+  border-width: 1px;
+  border-color: #344a41;
+  border-radius: 5px;
+  background-color: #18231f;
+  flex-direction: row;
+  align-items: center;
+}
+
+.mode-arrow {
+  width: 44px;
+  height: 36px;
+  color: #66d9b1;
+  font-size: 28px;
+  line-height: 36px;
+  text-align: center;
+}
+
+.mode-copy {
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.mode-name {
+  color: #edf5f1;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.mode-count {
+  margin-left: 8px;
+  color: #849a92;
+  font-size: 11px;
+}
+
+.input-panel {
+  width: 100%;
+  min-height: 100px;
+  margin-top: 6px;
+  padding: 7px;
+  border-width: 1px;
+  border-color: #34483f;
+  border-radius: 5px;
+  background-color: #171f1c;
+  flex-direction: column;
+}
+
+.input-row {
+  width: 100%;
+  height: 40px;
+  padding-right: 8px;
+  padding-left: 8px;
+  border-radius: 3px;
+  background-color: #121916;
+  flex-direction: row;
+  align-items: center;
+}
+
+.input-row-active {
+  border-left-width: 3px;
+  border-left-color: #54d1a4;
+  background-color: #18251f;
+}
+
+.line-label {
+  width: 58px;
+  color: #789088;
+  font-size: 11px;
+}
+
+.line-scroll {
+  flex: 1;
+  height: 38px;
+}
+
+.line-value {
+  height: 38px;
+  color: #f2cf82;
+  font-size: 17px;
+  line-height: 38px;
+}
+
+.input-hint {
+  width: 100%;
+  height: 24px;
+  padding-left: 8px;
+  color: #758a83;
+  font-size: 10px;
+  line-height: 24px;
+}
+
+.keyboard {
+  width: 100%;
+  flex: 1;
+  margin-top: 5px;
+  flex-direction: column;
+}
+
+.layer-tabs {
+  width: 100%;
+  height: 28px;
+  flex-direction: row;
+  align-items: center;
+}
+
+.layer-tab {
+  width: 62px;
+  height: 24px;
+  margin-right: 5px;
+  border-radius: 3px;
+  background-color: #1b2722;
+  color: #8ba199;
+  font-size: 11px;
+  line-height: 24px;
+  text-align: center;
+}
+
+.layer-tab-active {
+  background-color: #2e6d57;
+  color: #ffffff;
+}
+
+.layer-caption {
+  flex: 1;
+  color: #657b73;
+  font-size: 10px;
+  text-align: right;
+}
+
+.keypad {
+  width: 100%;
+  flex: 1;
+  flex-direction: column;
+}
+
+.key-row {
+  width: 100%;
+  flex: 1;
+  margin-top: 4px;
+  flex-direction: row;
+}
+
+.key {
+  flex: 1;
+  height: 100%;
+  margin-right: 5px;
+  border-width: 1px;
+  border-color: #3c4d46;
+  border-radius: 4px;
+  background-color: #202a26;
+  color: #f0f5f2;
+  font-size: 20px;
+  line-height: 40px;
+  text-align: center;
+}
+
+.key-op {
+  border-color: #47685b;
+  background-color: #263a32;
+  color: #a7e8d0;
+}
+
+.key-symbol {
+  border-color: #6e5d34;
+  background-color: #352e20;
+  color: #f3d18b;
+}
+
+.letter-key {
+  color: #a8d7ff;
+  font-size: 18px;
+}
+
+.key-action {
+  border-color: #584449;
+  background-color: #302329;
+  color: #e3c1c9;
+  font-size: 13px;
+}
+
+.key-equals {
+  border-color: #58d5a7;
+  background-color: #2a765b;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.key-wide {
+  flex: 2;
+}
+</style>
